@@ -2,17 +2,7 @@ from ftplib import FTP
 import os
 import sys
 
-titleIdLookup = {
-    "JP": '01003C700009C000',
-    "US": '01003BC0000A0000',
-    "EU": '0100F8F0000A2000',
-    'EveJP': '0100D070040F8000',
-    'EveUS': '01003870040FA000',
-    'EveEU': '010086F0040FC000',
-    'TrialUS': '01006BB00D45A000',
-    'ShowDL': '010000A00218E000'
-}
-
+titleId = "01003D200BAA2000"
 
 def listdirs(connection,_path):
     file_list, dirs, nondirs = [], [], []
@@ -45,20 +35,16 @@ if '.' not in consoleIP:
 consolePort = 5000
 
 if len(sys.argv) < 3:
-    romType = 'US'
+    version = '102'
 else:
-    romType = sys.argv[2]
-
-if len(sys.argv) < 4:
-    version = '310'
-else:
-    version = sys.argv[3]
+    version = sys.argv[2]
 
 curDir = os.curdir
 
 ftp = FTP()
 print(f'Connecting to {consoleIP}... ', end='')
 ftp.connect(consoleIP, consolePort)
+ftp.login(user=sys.argv[3], passwd=sys.argv[4])
 print('Connected!')
 
 patchDirectories = []
@@ -84,11 +70,11 @@ for patchDir in patchDirectories:
             ftp.storbinary(f'STOR {sdPath}', open(fullPath, 'rb'))
 
 ensuredirectory(ftp, '/atmosphere', 'titles')
-ensuredirectory(ftp, '/atmosphere/titles', titleIdLookup[romType])
-ensuredirectory(ftp, f'/atmosphere/titles/{titleIdLookup[romType]}', 'exefs')
+ensuredirectory(ftp, '/atmosphere/contents', titleId)
+ensuredirectory(ftp, f'/atmosphere/contents/{titleId}', 'exefs')
 
 binaryPath = f'{os.path.basename(os.getcwd())}{version}.nso'
 if os.path.isfile(binaryPath):
-    sdPath = f'/atmosphere/titles/{titleIdLookup[romType]}/exefs/subsdk0'
+    sdPath = f'/atmosphere/contents/{titleId}/exefs/subsdk1'
     print(f'Sending {sdPath}')
     ftp.storbinary(f'STOR {sdPath}', open(binaryPath, 'rb'))

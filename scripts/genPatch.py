@@ -69,7 +69,8 @@ def getSymAddrFromMap(target, regexStr, symStr):
         foundLinePos = mapFile.rfind('\n', 0, regexMatch.span()[0] + start) + 1
         foundLineEndPos = mapFile.find('\n', regexMatch.span()[1] + start)
         foundLine = mapFile[foundLinePos:foundLineEndPos].strip()
-        foundAddr = int(foundLine[:foundLine.find(" ")].replace("00000000:00000071", ''), 16)
+        foundAddrStr = foundLine.split(' ')[0];
+        foundAddr = int(foundAddrStr.split(':')[1], 16)
         
         return foundLineEndPos, foundAddr
 
@@ -78,7 +79,7 @@ def getSymAddrFromMap(target, regexStr, symStr):
         loadAddrAdjustment = int(patchConfig["nso_load_addr"][target], 16)
     else:
         mapFile = SLMapFile
-        loadAddrAdjustment = int(patchConfig["nso_load_addr"]["subsdk0"], 16)
+        loadAddrAdjustment = int(patchConfig["nso_load_addr"]["subsdk1"], 16)
 
     foundPos, firstFoundAddr = getFoundPosAddr(0)
     if foundPos == -1:
@@ -197,7 +198,7 @@ def addPatchFromFile(patchFilePath):
                     break
             line = line.split('/', 1)[0].strip()
 
-            # if is patch variable line, e.g. [version=310]
+            # if is patch variable line, e.g. [version=102]
             patchVarLineMatch = re.match(r'\[(.+)\]', line)
             if patchVarLineMatch:
                 patchVarMatches = re.findall(r'(\w+)=(\w+)', patchVarLineMatch.group(1))

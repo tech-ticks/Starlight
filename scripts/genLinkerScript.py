@@ -8,25 +8,6 @@ symbolExceptions = [ "_init",
 					 "__nnDetailNintendoSdkRuntimeObjectFile",
 					 "__nnDetailNintendoSdkNsoFileRefer" 
 ]
-symbolPrefixes = [ 
-					"Curl", # some curl stuff
-					"curl", # moar curl
-					# "_ZG",  # guards
-					# "_ZN",  # regular variables
-					# "_ZT",  # typeinfo / vtables
-					# "_ZZ",
-					"_Z",   # literally everything
-					"pfnc_",
-					"mem",
-					"str"
-					"alloc",
-					"malloc",
-					"free",
-					"calloc",
-					"realloc",
-					"aligned_alloc",
-					"malloc_usable_size"
-]
 
 if len(sys.argv) < 3:
 	print("Syntax: genLinkerScript.py <map> <sizeFromMain>\n")
@@ -53,7 +34,6 @@ with open("syms.ld", "w") as linker:
 			continue
 
 		address = addressSplit[1]
-		
 		symbolName = firstSplit[8]
 		symbolName = symbolName.strip("\n\r")
 		
@@ -62,9 +42,8 @@ with open("syms.ld", "w") as linker:
 		address = "0x" + address
 	
 		# we check to see if this symbol has a prefix that we need to keep
-		if (any([symbolName.startswith(symbolPrefix)
-				for symbolPrefix in symbolPrefixes])
-				or symbolName in symbolExceptions):
+		if (not any([symbolName.startswith(symbolPrefix)
+				for symbolPrefix in symbolExceptions])):
 
 			# skip the first 5 useless lines
 			if curLine < 5:
