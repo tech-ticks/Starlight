@@ -80,7 +80,6 @@ def getSymAddrFromMap(target, regexStr, symStr):
     else:
         mapFile = SLMapFile
         loadAddrAdjustment = int(patchConfig["nso_load_addr"]["subsdk1"], 16)
-        print("adjustment in subsdk1: ", hex(loadAddrAdjustment))
 
     foundPos, firstFoundAddr = getFoundPosAddr(0)
     if foundPos == -1:
@@ -97,7 +96,6 @@ def getSymAddrFromMap(target, regexStr, symStr):
             sys.exit(-1)
 
     # map stores signed address relative to starlight as unsigned?
-    print("adjusted offset: ", hex(loadAddrAdjustment + ctypes.c_long(firstFoundAddr).value))
     return loadAddrAdjustment + ctypes.c_long(firstFoundAddr).value
 
 def resolveAddressAndTarget(target, symbolStr):
@@ -232,14 +230,11 @@ def addPatchFromFile(patchFilePath):
                         if not line.startswith(ident):
                             break
                 except StopIteration:
-                    print("adding to list, offset:")
                     addPatchToPatchlist(patchTarget, patchAddress, patchContent)
                     break
             else:
                 patchContent = getPatchBin(patchTarget, patchAddress, addressSplit[1])
 
-            print("adding to list, offset:")
-            print(hex(patchAddress))
             addPatchToPatchlist(patchTarget, patchAddress, patchContent)
 
 if len(sys.argv) < 2:
@@ -267,8 +262,6 @@ for nso in patchList:
     with open(ipsOutPath, 'wb') as ipsFile:
         ipsFile.write(IPS_HEADER_MAGIC)
         for patch in patchList[nso]:
-            print(hex(patch.offset))
-            print(''.join(format(x, '02x') for x in patch.content))
             ipsFile.write(struct.pack('>I', patch.offset))
             ipsFile.write(struct.pack('>H', patch.length))
             ipsFile.write(patch.content)
