@@ -70,7 +70,7 @@ def getSymAddrFromMap(target, regexStr, symStr):
         foundLineEndPos = mapFile.find('\n', regexMatch.span()[1] + start)
         foundLine = mapFile[foundLinePos:foundLineEndPos].strip()
         foundAddrStr = foundLine.split(' ')[0];
-        foundAddr = int(foundAddrStr.split(':')[1], 16)
+        foundAddr = int(foundAddrStr.split(':')[1] if ':' in foundAddrStr else foundAddrStr, 16)
         
         return foundLineEndPos, foundAddr
 
@@ -230,11 +230,14 @@ def addPatchFromFile(patchFilePath):
                         if not line.startswith(ident):
                             break
                 except StopIteration:
+                    print("adding to list, offset:")
                     addPatchToPatchlist(patchTarget, patchAddress, patchContent)
                     break
             else:
                 patchContent = getPatchBin(patchTarget, patchAddress, addressSplit[1])
 
+            print("adding to list, offset:")
+            print(hex(patchAddress))
             addPatchToPatchlist(patchTarget, patchAddress, patchContent)
 
 if len(sys.argv) < 2:
@@ -262,6 +265,8 @@ for nso in patchList:
     with open(ipsOutPath, 'wb') as ipsFile:
         ipsFile.write(IPS_HEADER_MAGIC)
         for patch in patchList[nso]:
+            print(hex(patch.offset))
+            print(''.join(format(x, '02x') for x in patch.content))
             ipsFile.write(struct.pack('>I', patch.offset))
             ipsFile.write(struct.pack('>H', patch.length))
             ipsFile.write(patch.content)

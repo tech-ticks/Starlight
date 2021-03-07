@@ -1,6 +1,3 @@
 [version=102, target=main]
-Organization_ClearFixedPartyOrganization+0:
-  NOP
-  NOP
-  NOP
-  NOP
+Organization_ClearFixedPartyOrganization+1C:
+   BL patchMain
