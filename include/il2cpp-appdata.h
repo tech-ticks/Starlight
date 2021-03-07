@@ -3,7 +3,11 @@
 
 #pragma once
 
+// The compiler on macOS complains without this
+#define __arm64__
+
 #include <cstdint>
+#include <cstddef>
 
 // Application-specific types
 #include "il2cpp-types.h"
@@ -12,12 +16,12 @@
 #include "il2cpp-api-functions-ptr.h"
 
 // IL2CPP APIs
-#define DO_API(r, n, p) extern r (*n) p
+#define DO_API(r, n, p) extern "C" r n p
 #include "il2cpp-api-functions.h"
 #undef DO_API
 
 // Application-specific functions
-#define DO_APP_FUNC(a, r, n, p) r (*n) p
+#define DO_APP_FUNC(a, r, n, p) extern "C" r n p
 #define DO_APP_FUNC_METHODINFO(a, n) struct MethodInfo ** n
 #include "il2cpp-functions.h"
 #undef DO_APP_FUNC

@@ -1,3 +1,9 @@
 [version=102, target=main]
 Organization_ClearFixedPartyOrganization+1C:
-   BL patchMain
+   BL hookClearFixedPartyOrganization
+
+Organization_IsEventGENGAA+8:
+   MOV W0, #1
+
+GameFlowBlob_Dungeon_DungeonLoop_d_26_MoveNext+D10:
+   BL hookDungeonLoopMoveNext

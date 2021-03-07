@@ -4,6 +4,9 @@ Environment for linking to PMD: Rescue Team DX executable and implementing hooks
 ## Setup
 Install Python 3, [devkitPro](https://devkitpro.org/) and run `pip install keystone-engine`.
 
+## Examples
+Examples for manipulating party members are included, see `source/main.cpp` and `patches/codehook.slpatch`
+
 ## Building
 - Make sure that the `DEVKITPRO` environment variable is set to the path where devkitPro is installed.
 - Run `make`.
@@ -21,6 +24,7 @@ Install Python 3, [devkitPro](https://devkitpro.org/) and run `pip install keyst
 - [Thog](https://github.com/Thog) - Expertise in how rtld is implemented
 
 ## Credits
+- djkaty - Il2CppInspector (used to generate headers and extract function offsets)
 - brycewithfiveunderscores - [Starlight-SMO-Example](https://github.com/brycewithfiveunderscores/Starlight-SMO-Example)
 - devkitA64
 - libnx - switch build rules

@@ -80,6 +80,7 @@ def getSymAddrFromMap(target, regexStr, symStr):
     else:
         mapFile = SLMapFile
         loadAddrAdjustment = int(patchConfig["nso_load_addr"]["subsdk1"], 16)
+        print("adjustment in subsdk1: ", hex(loadAddrAdjustment))
 
     foundPos, firstFoundAddr = getFoundPosAddr(0)
     if foundPos == -1:
@@ -96,6 +97,7 @@ def getSymAddrFromMap(target, regexStr, symStr):
             sys.exit(-1)
 
     # map stores signed address relative to starlight as unsigned?
+    print("adjusted offset: ", hex(loadAddrAdjustment + ctypes.c_long(firstFoundAddr).value))
     return loadAddrAdjustment + ctypes.c_long(firstFoundAddr).value
 
 def resolveAddressAndTarget(target, symbolStr):

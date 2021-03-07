@@ -3,38 +3,25 @@
 
 #include <cstddef>
 
-//#include "il2cpp-appdata.h"
-
-#include <stdio.h>
-#include <math.h>
+#include "il2cpp-appdata.h"
 
 #define PRESET_INDEX_FIXED 10
 
-static int y = 0;
-
-void Bind_Organization_SetPresetMember(int32_t presetIndex, int32_t memberId, int32_t warehouseId, int32_t formIndex, void * method);
-
-int other(int x) {
-    return x + y + 4 % 23;
-}
-
-void patchMain() {
+void hookClearFixedPartyOrganization() {
     // Restore the instruction that was replaced
-    __asm ("MOV X19, X0");
+    __asm ("MOV W19, W1");
 
     // Add Jirachi to all fixed organizations
-    Bind_Organization_SetPresetMember(PRESET_INDEX_FIXED, 2, (int) /*FixedWarehouseId__Enum::JIRAACHI*/0x0000001c, 0, nullptr);
+    Bind_Organization_SetPresetMember(PRESET_INDEX_FIXED, 2, (int) FixedWarehouseId__Enum::JIRAACHI, 0, nullptr);
+}
 
-    /*int x;
-    for (unsigned long i = 0; i < 1000000; i++) {
-        x += i / 200 % 256 + 4 + other(x) + other(x + 6);
-        for (int j = 0; j < 1000; j++) {
-            x += j + other(x+j) + other(j);
-        }
-    }
-    y = x;*/
+void hookDungeonLoopMoveNext(DungeonParameter* dungeonParameter) {
+    // The DungeonParameter pointer is passed as an argument since it's stored in X0 at that point
+    // Add Absol and Mew as guests. This is always called since the check for Gengar is disabled in the patch.
+    DungeonParameter_AddExtraFixedPokemon(dungeonParameter, FixedWarehouseId__Enum::MYUU, ExtraPokemonType__Enum::GUEST, nullptr);
+    DungeonParameter_AddExtraFixedPokemon(dungeonParameter, FixedWarehouseId__Enum::ABUSORU, ExtraPokemonType__Enum::GUEST, nullptr);
 }
 
 int main(int argc, char** argv) {
-    printf("test");
+    // Do nothing on startup
 }
