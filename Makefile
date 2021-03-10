@@ -10,7 +10,7 @@ S2ROMTYPE ?= US
 all: starlight
 
 starlight:
-	$(MAKE) all -f MakefileNSO S2VER=$(S2VER) S2VERSTR=$(S2VERSTR)
+	$(MAKE) all -f nso.mk S2VER=$(S2VER) S2VERSTR=$(S2VERSTR)
 	$(MAKE) starlight_patch_$(S2VER)/*.ips
 
 starlight_patch_$(S2VER)/*.ips: patches/*.slpatch patches/configs/$(S2VER).config patches/maps/$(S2VER)/*.map \
@@ -22,5 +22,5 @@ send: all
 	python3 scripts/sendPatch.py $(IP) $(S2ROMTYPE) $(S2VER)
 
 clean:
-	$(MAKE) clean -f MakefileNSO
+	$(MAKE) clean -f nso.mk
 	@rm -fr starlight_patch_*

@@ -133,7 +133,7 @@ all: $(BUILD)
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@cp $(LINKERSCRIPTS)/syms$(S2VER).ld $(LINKERSCRIPTS)/symstemp.ld # This is required because you can't pass a variable to the .specs
-	$(MAKE) -C $(BUILD) -f $(CURDIR)/MakefileNSO
+	$(MAKE) -C $(BUILD) -f $(CURDIR)/nso.mk
 	@rm -f $(LINKERSCRIPTS)/symstemp.ld
 
 #---------------------------------------------------------------------------------

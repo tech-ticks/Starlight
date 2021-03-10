@@ -1,4 +1,7 @@
 [version=102, target=main]
+GameData__ctor+14:
+   BL hookGameDataConstructor
+
 Organization_ClearFixedPartyOrganization+1C:
    BL hookClearFixedPartyOrganization
 

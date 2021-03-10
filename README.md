@@ -24,6 +24,7 @@ Examples for manipulating party members are included, see `source/main.cpp` and 
 - [Thog](https://github.com/Thog) - Expertise in how rtld is implemented
 
 ## Credits
+- [Skyline](https://github.com/skyline-dev/skyline) contributors - Additional headers, logging
 - djkaty - Il2CppInspector (used to generate headers and extract function offsets)
 - brycewithfiveunderscores - [Starlight-SMO-Example](https://github.com/brycewithfiveunderscores/Starlight-SMO-Example)
 - devkitA64
