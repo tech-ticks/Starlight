@@ -76,7 +76,7 @@ namespace fs {
     // FILE
     Result GetEntryType(nn::fs::DirectoryEntryType* type, char const* path);
     Result CreateFile(char const* filepath, s64 size);
-    Result OpenFile(nn::fs::FileHandle*, char const* path, s32);
+    Result OpenFile(nn::fs::FileHandle*, char const* path, s32 openMode);
     Result SetFileSize(FileHandle fileHandle, s64 filesize);
     void CloseFile(FileHandle fileHandle);
     Result FlushFile(FileHandle fileHandle);

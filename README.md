@@ -1,5 +1,5 @@
 # hyperbeam
-Environment for linking to PMD: Rescue Team DX executable and implementing hooks.
+Environment for linking to the PMD: Rescue Team DX executable and implementing hooks.
 
 ## Setup
 Install Python 3, [devkitPro](https://devkitpro.org/) and run `pip install keystone-engine`.
@@ -13,6 +13,9 @@ Examples for manipulating party members are included, see `source/main.cpp` and 
 - Copy the built `Starlight102.nso` to `/atmosphere/contents/01003D200BAA2000/exefs/subsdk1`
 - Copy `starlight_patch_102/3AB632DEE82D59448599B2291F30994A.ips` to `/atmosphere/exefs_patches/starlight_patch_102/3AB632DEE82D59448599B2291F30994A.ips`
 (if you're using Yuzu, copy the .ips to the `exefs` directory inside your mod directory, see their [game modding guide](https://yuzu-emu.org/help/feature/game-modding/)).
+
+Alternatively, run `IP=[Switch IP] USER=[FTP User] PW=[FTP password] make listen` to build the 
+NSO, send the built files to your Switch via FTP and connect the TCP logger.
 
 ## Starlight Contributors
 - [3096](https://github.com/3096)

@@ -5,9 +5,8 @@
 
 S2VER ?= 102
 S2VERSTR ?= 1.0.2
-S2ROMTYPE ?= US
 
-all: starlight
+all: starlight files
 
 starlight:
 	$(MAKE) all -f nso.mk S2VER=$(S2VER) S2VERSTR=$(S2VERSTR)
@@ -18,8 +17,15 @@ starlight_patch_$(S2VER)/*.ips: patches/*.slpatch patches/configs/$(S2VER).confi
 	@rm -f starlight_patch_$(S2VER)/*.ips
 	python3 scripts/genPatch.py $(S2VER)
 
+files:
+	mkdir -p custom_data
+	python3 scripts/generateCustomFiles.py
+
 send: all
-	python3 scripts/sendPatch.py $(IP) $(S2ROMTYPE) $(S2VER)
+	python3 scripts/sendPatch.py $(IP) $(S2VER) $(USER) $(PW)
+
+listen: all send
+	python3 scripts/logClient.py
 
 clean:
 	$(MAKE) clean -f nso.mk

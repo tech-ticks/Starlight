@@ -22,12 +22,12 @@
 
 // Application-specific functions
 #define DO_APP_FUNC(a, r, n, p) extern "C" r n p
-#define DO_APP_FUNC_METHODINFO(a, n) struct MethodInfo ** n
+#define DO_APP_FUNC_METHODINFO(a, n) struct MethodInfo * n
 #include "il2cpp-functions.h"
 #undef DO_APP_FUNC
 #undef DO_APP_FUNC_METHODINFO
 
 // TypeInfo pointers
-#define DO_TYPEDEF(a, n) n ## __Class** n ## __TypeInfo
+#define DO_TYPEDEF(a, n) n ## __Class* n ## __TypeInfo
 #include "il2cpp-types-ptr.h"
 #undef DO_TYPEDEF

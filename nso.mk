@@ -47,7 +47,7 @@ CFLAGS	:=	-g -Wall -ffunction-sections \
 
 CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -DS2VER=$(S2VER) -DS2VERSTR=$(S2VERSTR)
 
-CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -fpermissive
+CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS  =  -specs=../switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)

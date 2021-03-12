@@ -1,8 +1,9 @@
 import socket
 import sys
+import os
 import time
 
-HOST = sys.argv[1]
+HOST = sys.argv[1] if len(sys.argv) > 1 else os.environ["IP"]
 PORT = int(sys.argv[2]) if len(sys.argv) > 2 else 8989
 
 print(f"Connecting to {HOST}:{PORT}...", end='', flush="True")

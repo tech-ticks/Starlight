@@ -6,29 +6,28 @@
 #include <cstddef>
 #include <cstdint>
 
-typedef __uint8_t __sa_family_t;
-typedef __uint32_t __socklen_t;
-
+typedef uint8_t __sa_family_t;
+typedef uint32_t __socklen_t;
 struct in_addr {
-	__uint32_t s_addr;
+	uint32_t s_addr;
 };
 
 struct sockaddr_in {
-	__uint8_t      sin_len;
-	__uint8_t      sin_family;
-	__uint16_t     sin_port;
+	uint8_t sin_len;
+	uint8_t sin_family;
+	uint16_t sin_port;
 	struct in_addr sin_addr;
-	char           sin_zero[8];
+	char sin_zero[8];
 };
 
 #include <cstring>
 #include <cstdarg>
 #include <alloca.h>
 
-#include "nn/os.hpp"
-#include "nn/socket.h"
-#include "rtdx/mem.h"
-#include "rtdx/misc.h"
+#include <nn/os.hpp>
+#include <nn/socket.h>
+#include <hyperbeam/core/mem.h>
+#include <rtdx/misc.h>
 
 #ifdef ENABLE_LOGGING
     #define LOG_INIT(...) ::hb::logging::initLogging(__VA_ARGS__)
@@ -75,9 +74,9 @@ namespace hb::logging {
             // Probably not really thread-safe, sorry if this crashes
             while (messageHead != nullptr) {
                 nn::socket::Send(socket, messageHead->message, strlen(messageHead->message), 0);
-                rtdx_free(messageHead->message);
+                hb::free(messageHead->message);
                 Message* next = messageHead->next;
-                rtdx_free(messageHead);
+                hb::free(messageHead);
                 messageHead = next;
             }
 
@@ -88,17 +87,17 @@ namespace hb::logging {
 
     void initLogging() {
         const size_t stackSize = 0x3000;
-        void* threadStack = rtdx_memalign(0x1000, stackSize);
+        void* threadStack = hb::memalign(0x1000, stackSize);
 
         nn::os::CreateThread(&loggerThread, ThreadMain, nullptr, threadStack, stackSize, 16, 0);
         nn::os::StartThread(&loggerThread);
     }
 
     void log(const char* str) {
-        auto message = (Message*) rtdx_malloc(sizeof(Message));
-        message->message = (char*) rtdx_malloc(strlen(str) + 1);
+        auto message = (Message*) hb::malloc(sizeof(Message));
+        message->message = (char*) hb::malloc(strlen(str) + 1);
         message->next = nullptr;
-        rtdx_memcpy(message->message, str, strlen(str) + 1);
+        hb::memcpy(message->message, str, strlen(str) + 1);
 
         // Add to the end of the queue
         if (messageHead == nullptr) {

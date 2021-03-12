@@ -62,7 +62,7 @@ def initConfig():
 def getSymAddrFromMap(target, regexStr, symStr):
     mapFile = None
     def getFoundPosAddr(start):
-        regexMatch = re.search(regexStr, mapFile[start:])
+        regexMatch = re.search(regexStr, mapFile[start:], re.MULTILINE)
         if not regexMatch:
             return -1, -1
 
@@ -138,7 +138,7 @@ def resolveAddressAndTarget(target, symbolStr):
         pass
 
     # search symbol in map
-    regexStr = r'\w*'.join(re.findall(r'\w+', symbolStr))
+    regexStr = r'\w*'.join(re.findall(r'\w+', symbolStr)) + "$"
     try:
         resolvedAddr += getSymAddrFromMap(target, regexStr, symbolStr)
     except NameError:

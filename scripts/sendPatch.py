@@ -78,3 +78,19 @@ if os.path.isfile(binaryPath):
     sdPath = f'/atmosphere/contents/{titleId}/exefs/subsdk1'
     print(f'Sending {sdPath}')
     ftp.storbinary(f'STOR {sdPath}', open(binaryPath, 'rb'))
+
+# Custom files
+ensuredirectory(ftp, f'/atmosphere/contents/{titleId}', 'romfs')
+ensuredirectory(ftp, f'/atmosphere/contents/{titleId}/romfs', 'Data')
+ensuredirectory(ftp, f'/atmosphere/contents/{titleId}/romfs/Data', 'StreamingAssets')
+ensuredirectory(ftp, f'/atmosphere/contents/{titleId}/romfs/Data/StreamingAssets', 'custom_data')
+
+custom_data_path = "custom_data"
+if os.path.exists(custom_data_path):
+    _, _, files = next(os.walk(custom_data_path))
+    for file in files:
+        fullPath = os.path.join(custom_data_path, file)
+        if os.path.exists(fullPath):
+            sdPath = f'/atmosphere/contents/{titleId}/romfs/Data/StreamingAssets/custom_data/{file}'
+            print(f'Sending {sdPath}')
+            ftp.storbinary(f'STOR {sdPath}', open(fullPath, 'rb'))

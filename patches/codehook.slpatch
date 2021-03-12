@@ -2,8 +2,11 @@
 GameData__ctor+14:
    BL hookGameDataConstructor
 
-Organization_ClearFixedPartyOrganization+1C:
-   BL hookClearFixedPartyOrganization
+Organization_GetOrganizationType+0:
+   B customGetOrganizationType
+
+Organization_ClearFixedPartyOrganization+0:
+   B customClearFixedPartyOrganization
 
 Organization_IsEventGENGAA+8:
    MOV W0, #1

@@ -10,4 +10,5 @@
 extern "C" void* rtdx_malloc(size_t size);
 extern "C" void rtdx_free(void* data);
 extern "C" void* rtdx_memalign(size_t alignment, size_t size);
-extern "C" void rtdx_memcpy(void* dest, void const* src, uint64_t count);
+extern "C" void rtdx_memcpy(void* dest, void const* src, size_t count);
+extern "C" void rtdx_memset(void* dest, int value, size_t count);
