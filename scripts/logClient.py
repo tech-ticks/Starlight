@@ -18,8 +18,7 @@ while not connected:
     except:
         time.sleep(1)
 
-print("")
-print("Connected!")
+print(" Connected!")
 
 while True:
     data = sock.recv(32)

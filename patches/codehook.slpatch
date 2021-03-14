@@ -2,6 +2,9 @@
 GameData__ctor+14:
    BL hookGameDataConstructor
 
+PegasusActDatabase__cctor+0:
+   B customPegasusActDatabaseStaticConstructor
+
 Organization_GetOrganizationType+0:
    B customGetOrganizationType
 

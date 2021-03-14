@@ -22,4 +22,3 @@ lib/
 linkerscripts/symstemp.ld
 starlight_patch*/
 scripts/.idea/*
-custom_data/

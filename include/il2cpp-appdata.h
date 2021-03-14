@@ -16,18 +16,19 @@
 #include "il2cpp-api-functions-ptr.h"
 
 // IL2CPP APIs
-#define DO_API(r, n, p) extern "C" r n p
 #include "il2cpp-api-functions.h"
-#undef DO_API
 
 // Application-specific functions
 #define DO_APP_FUNC(a, r, n, p) extern "C" r n p
-#define DO_APP_FUNC_METHODINFO(a, n) struct MethodInfo * n
+
+// Stupid and ugly workaround since extern "C" on the MethodInfo pointer somehow breaks everything
+#define DO_APP_FUNC_METHODINFO(a, n) extern "C" struct MethodInfo* n
+
 #include "il2cpp-functions.h"
 #undef DO_APP_FUNC
 #undef DO_APP_FUNC_METHODINFO
 
 // TypeInfo pointers
-#define DO_TYPEDEF(a, n) n ## __Class* n ## __TypeInfo
+#define DO_TYPEDEF(a, n) extern "C" n ## __Class* n ## __TypeInfo
 #include "il2cpp-types-ptr.h"
 #undef DO_TYPEDEF
