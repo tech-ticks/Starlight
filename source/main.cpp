@@ -11,6 +11,7 @@
 #define ENABLE_LOGGING
 #include <hyperbeam/logging.h>
 #include <hyperbeam/fs.h>
+#include <rtdx/starters.h>
 
 #define PRESET_INDEX_FIXED 10
 
@@ -74,7 +75,7 @@ void hookGameDataConstructor(GameData* thisPtr) {
     }
 
     // Read fixed preset teams ("organizations") from a file
-    char* organizationsFile = (char*) hb::fs::readEntireFile("hyperbeam_romfs:/Data/StreamingAssets/custom_data/fixed_organization.bin");
+    char* organizationsFile = hb::fs::readEntireFile("hyperbeam_romfs:/Data/StreamingAssets/custom_data/fixed_organization.bin");
     if (organizationsFile) {
         hb::memcpy(&state.organizationCount, organizationsFile, sizeof(uint32_t));
         state.organizations = new CustomOrganization[state.organizationCount];
@@ -86,9 +87,23 @@ void hookGameDataConstructor(GameData* thisPtr) {
         LOG("Failed to read fixed_organization.bin!");
     }
 
+    char* startersFile = hb::fs::readEntireFile("hyperbeam_romfs:/Data/StreamingAssets/custom_data/starters.bin");
+    if (startersFile) {
+        hb::memcpy(rtdx_starters, startersFile, sizeof(Starter) * RTDX_STARTER_COUNT);
+        delete startersFile;
+    } else {
+        LOG("Failed to read starters.bin!");
+    }
+
     if (!hb::fs::unmountRomFs()) {
         LOG("Failed to unmount RomFS!");
     }
+
+    LOG("Starter list: ");
+    for (int i = 0; i < RTDX_STARTER_COUNT; i++) {
+        LOGF("%d, ", rtdx_starters[i].pokemonId);
+    }
+    LOG("\n");
 }
 
 void customPegasusActDatabaseStaticConstructor() {
@@ -101,7 +116,7 @@ void customPegasusActDatabaseStaticConstructor() {
     uint32_t actorCount = 0;
     CustomActorData* actors;
 
-    char* actorDatabaseFile = (char*) hb::fs::readEntireFile("hyperbeam_romfs:/Data/StreamingAssets/custom_data/actor_database.bin");
+    char* actorDatabaseFile = hb::fs::readEntireFile("hyperbeam_romfs:/Data/StreamingAssets/custom_data/actor_database.bin");
     if (actorDatabaseFile) {
         hb::memcpy(&actorCount, actorDatabaseFile, sizeof(uint32_t));
         actors = new CustomActorData[actorCount];

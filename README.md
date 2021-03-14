@@ -17,7 +17,7 @@ Examples for manipulating party members are included, see `source/main.cpp` and 
 Alternatively, run `IP=[Switch IP] USER=[FTP User] PW=[FTP password] make listen` to build the 
 NSO, send the built files to your Switch via FTP and connect the TCP logger.
 
-`custom_data/actor_database.bin` can be generated with [Sky Editor Deluxe](https://github.com/tech-ticks/SkyEditor.RomEditor.Rtdx).
+The files in `custom_data` can be generated with [Sky Editor Deluxe](https://github.com/tech-ticks/SkyEditor.RomEditor.Rtdx).
 
 ## Starlight Contributors
 - [3096](https://github.com/3096)

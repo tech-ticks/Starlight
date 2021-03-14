@@ -10,7 +10,7 @@ namespace hb::fs {
 
     bool mountRomFs();
     bool unmountRomFs();
-    void* readEntireFile(const char* path);
+    char* readEntireFile(const char* path);
 
     bool mountRomFs() {
         u64 cacheSize;
@@ -47,7 +47,7 @@ namespace hb::fs {
         return true;
     }
   
-    void* readEntireFile(const char* path) {
+    char* readEntireFile(const char* path) {
         if (!romFsCache) {
             LOG("Rom not mounted, call mountRomFs() first.");
             return nullptr;
@@ -75,7 +75,7 @@ namespace hb::fs {
         }
 
         nn::fs::CloseFile(fileHandle);
-        return buffer;
+        return (char*) buffer;
     }
 
 }
