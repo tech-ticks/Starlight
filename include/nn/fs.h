@@ -86,7 +86,7 @@ namespace fs {
     Result ReadFile(nn::fs::FileHandle handle, s64 offset, void* buffer, u64 bufferSize);
     Result WriteFile(FileHandle handle, s64 fileOffset, void const* buff, u64 size, WriteOption const& option);
     Result GetFileSize(s64* size, FileHandle fileHandle);
-    Result Commit(char const* filepath);
+    Result Commit(char const* mountName);
 
     // DIRECTORY
     // there are three open modes; dir, file, all

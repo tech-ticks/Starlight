@@ -21,7 +21,6 @@
 // Application-specific functions
 #define DO_APP_FUNC(a, r, n, p) extern "C" r n p
 
-// Stupid and ugly workaround since extern "C" on the MethodInfo pointer somehow breaks everything
 #define DO_APP_FUNC_METHODINFO(a, n) extern "C" struct MethodInfo* n
 
 #include "il2cpp-functions.h"

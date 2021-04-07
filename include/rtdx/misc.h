@@ -8,3 +8,4 @@
 #include <cstddef>
 
 extern "C" int rtdx_vsnprintf(char * s, size_t n, const char* format, va_list arg);
+extern "C" int rtdx_snprintf (char * s, size_t n, const char * format, ...);

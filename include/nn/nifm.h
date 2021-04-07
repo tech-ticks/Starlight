@@ -16,6 +16,6 @@ namespace nifm {
     Result HandleNetworkRequestResult();
     void SubmitNetworkRequest();
     bool IsNetworkRequestOnHold();
-    Result GetCurrentPrimaryIpAddress(u64* inAddr);
+    Result GetCurrentPrimaryIpAddress(in_addr* inAddr);
 };  // namespace nifm
 };  // namespace nn

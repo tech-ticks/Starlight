@@ -36,4 +36,18 @@ namespace hb {
         return string;
     }
 
+    String* combineStrings(String* a, String* b) {
+        auto cppStrA = reinterpret_cast<Il2CppString*>(a);
+        auto cppStrB = reinterpret_cast<Il2CppString*>(b);
+
+        int totalLength = (cppStrA->length + cppStrB->length) * 2 + 2;
+        auto newTempStr = (char*) alloca(totalLength);
+        newTempStr[totalLength - 1] = 0;
+        newTempStr[totalLength - 2] = 0;
+        hb::memcpy(newTempStr, cppStrA, cppStrA->length * 2);
+        hb::memcpy(newTempStr + cppStrA->length * 2, cppStrB, cppStrB->length * 2);
+
+        return createCSharpString(newTempStr);
+    }
+
 }
