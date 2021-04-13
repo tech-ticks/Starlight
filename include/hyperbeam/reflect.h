@@ -40,11 +40,19 @@ namespace hb::reflect {
     }
 
     String* createAssemblyQualifiedName(const char* namespaceName, const char* typeName, const char* assemblyName) {
-        const char* formatString = "%s.%s, %s";
+        char* buffer;
 
-        int size = rtdx_snprintf(nullptr, 0, formatString, namespaceName, typeName, assemblyName) + 1;
-        char* buffer = (char*) alloca(size);
-        rtdx_snprintf(buffer, size, formatString, namespaceName, typeName, assemblyName);
+        if (namespaceName) {
+            const char* formatString = "%s.%s, %s";
+            int size = rtdx_snprintf(nullptr, 0, formatString, namespaceName, typeName, assemblyName) + 1;
+            buffer = (char*) alloca(size);
+            rtdx_snprintf(buffer, size, formatString, namespaceName, typeName, assemblyName);
+        } else {
+            const char* formatString = "%s, %s";
+            int size = rtdx_snprintf(nullptr, 0, formatString, typeName, assemblyName) + 1;
+            buffer = (char*) alloca(size);
+            rtdx_snprintf(buffer, size, formatString, typeName, assemblyName);
+        }
 
         return hb::createCSharpString(buffer);
     }
@@ -57,4 +65,28 @@ namespace hb::reflect {
     Type* getUnityType(Il2CppClass* klass) {
         return getUnityType(klass->namespaze, klass->name);
     }
+
+    Type* getUnityUIType(const char* namespaceName, const char* typeName) {
+        auto assemblyQualifiedName = createAssemblyQualifiedName(namespaceName, typeName, "UnityEngine.UI");
+        return Type_GetType_2(assemblyQualifiedName, nullptr);
+    }
+
+    Type* getUnityUIType(Il2CppClass* klass) {
+        return getUnityUIType(klass->namespaze, klass->name);
+    }
+
+    Type* getAssemblyCSharpType(const char* namespaceName, const char* typeName) {
+        auto assemblyQualifiedName = createAssemblyQualifiedName(namespaceName, typeName, "Assembly-CSharp");
+        return Type_GetType_2(assemblyQualifiedName, nullptr);
+    }
+
+    Type* getAssemblyCSharpType(Il2CppClass* klass) {
+        return getAssemblyCSharpType(klass->namespaze, klass->name);
+    }
+
+    Type* getType(const char* assemblyName, const char* namespaceName, const char* typeName) {
+        auto assemblyQualifiedName = createAssemblyQualifiedName(namespaceName, typeName, assemblyName);
+        return Type_GetType_2(assemblyQualifiedName, nullptr);
+    }
+
 }

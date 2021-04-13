@@ -13,7 +13,7 @@ namespace hb::unity {
 
     public:
         explicit AssetBundleWrapper(const char* name) {
-            const char* formatString = "hyperbeam_romfs:/Data/StreamingAssets/ab/%s";
+            const char* formatString = "hyperbeam_romfs:/Data/StreamingAssets/ab/%s.ab";
 
             int size = rtdx_snprintf(nullptr, 0, formatString, name) + 1;
             char* buffer = (char*) alloca(size);
@@ -26,7 +26,6 @@ namespace hb::unity {
         ~AssetBundleWrapper() {
             AssetBundle_Unload(assetBundle, true, nullptr);
             assetBundle = nullptr;
-            
         }
 
         UnityObject* loadAsset(const char* name) {

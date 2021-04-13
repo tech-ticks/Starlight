@@ -32,6 +32,9 @@ namespace hb {
         // Convert wide string to regular string in a cheap and bad way
         for (int i = 0; i < il2CppString->length; i++) {
             string[i] = origChars[i*2];
+            if (string[i] > 127) {
+                string[i] = '_';
+            }
         }
         return string;
     }
