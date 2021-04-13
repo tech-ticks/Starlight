@@ -2,6 +2,7 @@
 
 #include "il2cpp-appdata.h"
 #include <hyperbeam/core.h>
+#include <nn/nifm.h>
 
 struct in_addr;
 
