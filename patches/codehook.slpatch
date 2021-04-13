@@ -1,18 +1,18 @@
 [version=102, target=main]
-GameData__ctor+14:
-   BL hookGameDataConstructor
+GroundManager_OnEnable+18:
+   BL hookGroundManagerOnEnable
 
 PegasusActDatabase__cctor+0:
    B customPegasusActDatabaseStaticConstructor
 
-Organization_GetOrganizationType+0:
-   B customGetOrganizationType
+GameObjectManager_UpdateManual+24:
+   BL hookGameObjectManagerUpdate
 
-Organization_ClearFixedPartyOrganization+0:
-   B customClearFixedPartyOrganization
+ActCommand_SpecialFunc_callAction_d_4_MoveNext+28:
+   BL hookSpecialFuncMoveNext
 
-Organization_IsEventGENGAA+8:
-   MOV W0, #1
+ActCommand_Sleep_callAction_d_1_MoveNext+18:
+   BL hookSleepMoveNext
 
-GameFlowBlob_Dungeon_DungeonLoop_d_26_MoveNext+D10:
-   BL hookDungeonLoopMoveNext
+TextID_editorTextModify_+2EC:
+   NOP

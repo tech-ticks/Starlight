@@ -1,3 +1,23 @@
+# Sentry Duty minigame
+
+This branch contains code for the Sentry Duty minigame implementation. For instructions on how to build this,
+see the hyperbeam README below.
+
+This ROM hack was possible thanks to [Sky Editor Deluxe](https://github.com/tech-ticks/SkyEditor.RomEditor.Rtdx) and [SkyTemple](https://github.com/SkyTemple) contributors. Special thanks to 
+[irdkwia](https://github.com/irdkwia) who found the location of the Sentry Duty data in Explorers of Sky.
+
+## Generating custom data files
+
+Generating the data files is optional since the generated files are provided in the `data` directory. To build the files in `data/custom_data` manually, install [skytemple-files](https://pypi.org/project/skytemple-files/), [ndspy](https://pypi.org/project/ndspy/) and [Sky Editor Deluxe](https://github.com/tech-ticks/SkyEditor.RomEditor.Rtdx).
+
+Run `python scripts/extractEosSentryDutyData.py [path to EoS rom]` to generate a .csv file with data from EoS, then run `[path to Sky Editor Deluxe .dll] [path to directory with RTDX romfs and exefs] scripts/GenerateBinaryFiles.csx`. The base file `data/custom_data/town_npc_database.json` can be generated with a code hook at runtime (see `hookGroundManagerOnEnable` in `main.cpp`). 
+
+The version in this project was edited to include Loudred in every story scenario. Loudred was added to `m02_010` with an empty `refStepSymbol` and to all the other story scenarios with a `refStepSymbol` of `m02_010`, talking to him will always execute the script at `data/native_data/script/event/usual/talk_action_gr/talk_gr@m02_010.lua`.
+
+## Unity asset files
+
+`UnityAssets.unitypackage` contains all the Unity asset files that were used to generate the custom asset bundles inside `data/ab`.
+
 # hyperbeam
 Environment for linking to the PMD: Rescue Team DX executable and implementing hooks.
 

@@ -3,7 +3,7 @@
 
 #include "il2cpp-appdata.h"
 
-#include <hyperbeam/core.h> // Includes hb::RegisterStore, the new and delete operators and more
+#include <hyperbeam/core.h> // Includes the new and delete operators and more
 
 // Note that there's only a header file for logging.
 // Using a seperate translation unit messes things up and leads to crashes for some reason.
@@ -11,15 +11,14 @@
 #define ENABLE_LOGGING
 #include <hyperbeam/logging.h>
 #include <hyperbeam/fs.h>
+#include <hyperbeam/reflect.h>
+#include <hyperbeam/unity.h>
 #include <rtdx/starters.h>
 
-#define PRESET_INDEX_FIXED 10
+#include "SentryDutyMinigame.h"
 
-#define ORGANIZATION_MEMBER_NUM 3
-#define ORGANIZATION_GUEST_NUM 8
-#define ORGANIZATION_NAME_LENGTH 32
-
-char reserve_[0x100000]; // The game crashes without a zero memory area at the start of the executable. Not sure why, maybe the stack isn't set up?
+// The game crashes without a zero memory area at the start of the executable. Not sure why, maybe the stack isn't set up?
+char reserve_[0x100000];
 
 struct CustomActorData {
     char16_t symbolName[32];
@@ -32,38 +31,14 @@ struct CustomActorData {
     int specialNameHash;
 };
 
-struct alignas(4) OrganizationMember {
-    uint16_t index;
-    bool locked;
-};
+static SentryDutyMinigame* sentryDuty = nullptr;
+static bool interruptSleep = false; // Whether the next "Sleep" command should be interrupted (after the minigame)
 
-struct OrganizationGuest {
-    uint16_t index;
-    uint16_t type;
-};
-
-struct CustomOrganization {
-    char name[ORGANIZATION_NAME_LENGTH];
-    OrganizationMember members[ORGANIZATION_MEMBER_NUM];
-    OrganizationGuest guests[ORGANIZATION_GUEST_NUM];
-};
-
-static struct GlobalState {
-    uint32_t organizationCount = 0;
-    CustomOrganization* organizations;
-} state;
-
-void hookGameDataConstructor(GameData* thisPtr) {
+void hookGroundManagerOnEnable(GroundManager* thisPtr) {
     // Called early during game initialization. Use this hook for custom initialization logic.
 
     // Restore the instruction that was replaced
     __asm("MOV X19, X0");
-
-    // hb::RegisterStore automatically saves registers that must be preserved and restores them in the
-    // destructor when the struct goes out of scope (at the end of the function). This pattern makes
-    // writing safe hooks easier, but note that this is much slower than manually restoring the registers, 
-    // so don't use hb::RegisterStore in hot loops.
-    hb::RegisterStore registerStore;
 
     // Initialize the TCP log server (connect with "python scripts/logClient.py [Switch IP]")
     LOG_INIT();
@@ -74,44 +49,82 @@ void hookGameDataConstructor(GameData* thisPtr) {
         return;
     }
 
-    // Read fixed preset teams ("organizations") from a file
-    char* organizationsFile = hb::fs::readEntireFile("hyperbeam_romfs:/Data/StreamingAssets/custom_data/fixed_organization.bin");
-    if (organizationsFile) {
-        hb::memcpy(&state.organizationCount, organizationsFile, sizeof(uint32_t));
-        state.organizations = new CustomOrganization[state.organizationCount];
-        hb::memcpy(state.organizations, organizationsFile + sizeof(uint32_t),
-            sizeof(CustomOrganization) * state.organizationCount);
+    auto npcDatabase = thisPtr->groundTonwNpcDatabase_; // sic
 
-        delete organizationsFile;
+    // GroundTownNpcDatabase is a Unity ScriptableObject, so we can simply overwrite its data from a JSON file
+    auto json = hb::fs::readEntireFile("hyperbeam_romfs:/Data/StreamingAssets/custom_data/town_npc_database.json");
+    if (json) {
+        auto jsonString = hb::createCSharpString(json);
+        JsonUtility_FromJsonOverwrite(jsonString, (Object*) npcDatabase, JsonUtility_FromJsonOverwrite__MethodInfo);
+        delete json;
+
+        LOG("Loaded the town NPC database.\n");
     } else {
-        LOG("Failed to read fixed_organization.bin!");
+        LOG("Failed to load the town NPC database!\n");
     }
 
-    char* startersFile = hb::fs::readEntireFile("hyperbeam_romfs:/Data/StreamingAssets/custom_data/starters.bin");
-    if (startersFile) {
-        hb::memcpy(rtdx_starters, startersFile, sizeof(Starter) * RTDX_STARTER_COUNT);
-        delete startersFile;
-    } else {
-        LOG("Failed to read starters.bin!");
+    // Uncomment this code to dump the NPC database to JSON:
+    // auto json = JsonUtility_ToJson_1((Object*) npcDatabase, true, JsonUtility_ToJson_1__MethodInfo);
+    // LOG(hb::cSharpStringToTempCharPtr(json));
+    // LOG("\n");
+}
+
+void hookGameObjectManagerUpdate() {
+    // Called on every frame
+
+    // Restore the instruction that was replaced
+    __asm("MOV X19, X0");
+
+    // If the minigame is being played, update it
+    if (sentryDuty) {
+        sentryDuty->update();
+        if (sentryDuty->isFinished()) {
+            sentryDuty->destroy();
+            delete sentryDuty;
+            sentryDuty = nullptr;
+            interruptSleep = true;
+            LOG("Destoyed the minigame.\n");
+        }
+    }
+}
+
+void hookSpecialFuncMoveNext(ActCommand_SpecialFunc_callAction_d_4* thisPtr) {
+    // Restore the instruction that was replaced
+    __asm("MOV X19, X0");
+
+    int specialFuncType = (int) thisPtr->__4__this->specialFuncType;
+    LOGF("SpecialFunc call: %d\n", specialFuncType);
+
+    if (specialFuncType == 3000) {
+        // Spawn the minigame if SpecialFunc 3000 is called in a script
+        sentryDuty = new SentryDutyMinigame();
     }
 
-    if (!hb::fs::unmountRomFs()) {
-        LOG("Failed to unmount RomFS!");
+     // Restore the old value of X0
+    __asm ("MOV X0, %[value]" : [value] "=r" (thisPtr));
+}
+
+void hookSleepMoveNext(ActCommand_Sleep_callAction_d_1* thisPtr) {
+    // Restore the instruction that was replaced
+    __asm("MOV X19, X0");
+
+    // The game would normally continue executing the script after our SpecialFunc, causing the script
+    // to keep playing during the minigame.
+    // This can be circumvented by adding a really long "Sleep" command after the SpecialFunc command and
+    // setting the elapsed time to the sleep duration when the minigame is finished, continuing the script.
+
+    if (interruptSleep) {
+        thisPtr->_nowT_5__2 = thisPtr->__4__this->timeSec;
+        interruptSleep = false;
+        LOG("Interrupted sleep.\n");
     }
 
-    LOG("Starter list: ");
-    for (int i = 0; i < RTDX_STARTER_COUNT; i++) {
-        LOGF("%d, ", rtdx_starters[i].pokemonId);
-    }
-    LOG("\n");
+     // Restore the old value of X0
+    __asm ("MOV X0, %[value]" : [value] "=r" (thisPtr));
 }
 
 void customPegasusActDatabaseStaticConstructor() {
     // Read actor database from a file
-    if (!hb::fs::mountRomFs()) {
-        LOG("Failed to mount RomFS!");
-        return;
-    }
 
     uint32_t actorCount = 0;
     CustomActorData* actors;
@@ -127,10 +140,6 @@ void customPegasusActDatabaseStaticConstructor() {
     } else {
         LOG("Failed to read actor_database.bin!");
         return;
-    }
-
-    if (!hb::fs::unmountRomFs()) {
-        LOG("Failed to unmount RomFS!");
     }
 
     // IL2CPP lazily initializes method metadata, so the methods that need to be accessed here are not loaded yet.
@@ -180,68 +189,6 @@ void customPegasusActDatabaseStaticConstructor() {
     delete actors;
 
     LOGF("Initialized the actor database with %d actors.\n", actorCount);
-}
-
-Organization_OrganizationType__Enum customGetOrganizationType(String* organizationSymbol) {
-    // The return value affects the result of Organization_GetOrganizationType
-    // since this function is branched into with "B" instead of "BL".
-
-    // Find the organization that matches the symbol string
-    uint32_t index;
-    for (index = 0; index < state.organizationCount; index++) {
-        auto name = hb::createCSharpString(state.organizations[index].name);
-        if (hb::stringsEqual(organizationSymbol, name)) {
-            break;
-        }
-    }
-
-    if (index < state.organizationCount) {
-        // hb::cSharpStringToTempCharPtr creates a temporary buffer on the stack so it's deleted at the end of
-        // the function, no need to delete it manually.
-        LOGF("Resolved organization \"%s\" with index %d\n", hb::cSharpStringToTempCharPtr(organizationSymbol), index);
-        return (Organization_OrganizationType__Enum) index;
-    } else {
-        LOGF("WARNING: Unknown organization symbol \"%s\".\n", hb::cSharpStringToTempCharPtr(organizationSymbol));
-        return Organization_OrganizationType__Enum::FREE;
-    }
-}
-
-void customClearFixedPartyOrganization(Organization* thisPtr, bool resetFreeMember) {
-    // Apply the organization members that were loaded from the file
-    size_t organizationType = (size_t) thisPtr->type_;
-    for (uint32_t i = 0; i < ORGANIZATION_MEMBER_NUM; i++) {
-        auto member = state.organizations[organizationType].members[i];
-
-        Bind_Organization_SetOrganizationMemberLocked(i, member.locked, nullptr);
-        if (!resetFreeMember || member.locked) {
-            LOGF("Set member %d (locked: %d) to slot %d.\n", member.index, member.locked, i);
-            Bind_Organization_SetPresetMember(PRESET_INDEX_FIXED, i, member.index, 0, nullptr);
-        }
-    }
-
-    LOGF("Applied member Pokémon to organization type %d.\n", organizationType);
-}
-
-void hookDungeonLoopMoveNext(DungeonParameter* dungeonParameter) {
-    // The DungeonParameter pointer is passed as an argument since it's stored in X0 at this point
-    // This is always called since the check for Gengar is disabled in the patch.
-    // No need to use hb::RegisterStore here because we're replacing another method call.
-
-    // Shared method; see comment on list constructor above
-    auto organizationInstance = (Organization*) Singleton_1_NativeMessageWindowCtrl__get_Instance((MethodInfo*) Singleton_1_Organization__get_Instance__MethodInfo);
-    // Get the current organization index
-    size_t organizationType = (size_t) organizationInstance->type_;
-    
-    // Add all guests that were previously read from the file
-    for (uint32_t i = 0; i < ORGANIZATION_GUEST_NUM; i++) {
-        auto guest = state.organizations[organizationType].guests[i];
-        if (guest.index != (uint16_t) FixedWarehouseId__Enum::NULL_1) {
-            DungeonParameter_AddExtraFixedPokemon(dungeonParameter, (FixedWarehouseId__Enum) guest.index,
-                (ExtraPokemonType__Enum) guest.type, nullptr);
-        }
-    }
-
-    LOGF("Added guest Pokémon for organization type %d.\n", organizationType);
 }
 
 int main(int argc, char** argv) {

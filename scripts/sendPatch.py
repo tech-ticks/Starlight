@@ -85,7 +85,7 @@ ensuredirectory(ftp, f'/atmosphere/contents/{titleId}/romfs', 'Data')
 ensuredirectory(ftp, f'/atmosphere/contents/{titleId}/romfs/Data', 'StreamingAssets')
 ensuredirectory(ftp, f'/atmosphere/contents/{titleId}/romfs/Data/StreamingAssets', 'custom_data')
 
-custom_data_path = "custom_data"
+custom_data_path = "data/custom_data"
 if os.path.exists(custom_data_path):
     _, _, files = next(os.walk(custom_data_path))
     for file in files:
@@ -94,3 +94,21 @@ if os.path.exists(custom_data_path):
             sdPath = f'/atmosphere/contents/{titleId}/romfs/Data/StreamingAssets/custom_data/{file}'
             print(f'Sending {sdPath}')
             ftp.storbinary(f'STOR {sdPath}', open(fullPath, 'rb'))
+
+ab_path = "data/ab"
+if os.path.exists(ab_path):
+    _, _, files = next(os.walk(ab_path))
+    for file in files:
+        fullPath = os.path.join(ab_path, file)
+        if os.path.exists(fullPath):
+            sdPath = f'/atmosphere/contents/{titleId}/romfs/Data/StreamingAssets/ab/{file}'
+            print(f'Sending {sdPath}')
+            ftp.storbinary(f'STOR {sdPath}', open(fullPath, 'rb'))
+
+if os.path.exists('data/native_data/'):
+    ensuredirectory(ftp, f'/atmosphere/contents/{titleId}/romfs/Data/StreamingAssets/native_data/script', 'event')
+    ensuredirectory(ftp, f'/atmosphere/contents/{titleId}/romfs/Data/StreamingAssets/native_data/script/event', 'usual')
+    ensuredirectory(ftp, f'/atmosphere/contents/{titleId}/romfs/Data/StreamingAssets/native_data/script/event/usual', 'talk_action_gr')
+    sdPath = f'/atmosphere/contents/{titleId}/romfs/Data/StreamingAssets/native_data/script/event/usual/talk_action_gr/talk_gr@m02_010.lua'
+    ftp.storbinary(f'STOR {sdPath}', open('data/native_data/script/event/usual/talk_action_gr/talk_gr@m02_010.lua', 'rb'))
+
