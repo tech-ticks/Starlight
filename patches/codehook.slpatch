@@ -1,6 +1,6 @@
 [version=102, target=main]
-GameData__ctor+14:
-   BL hookGameDataConstructor
+GroundManager_OnEnable+18:
+   BL hookGroundManagerOnEnable
 
 PegasusActDatabase__cctor+0:
    B customPegasusActDatabaseStaticConstructor
@@ -16,3 +16,6 @@ Organization_IsEventGENGAA+8:
 
 GameFlowBlob_Dungeon_DungeonLoop_d_26_MoveNext+D10:
    BL hookDungeonLoopMoveNext
+
+TextID_editorTextModify_+2EC:
+   NOP

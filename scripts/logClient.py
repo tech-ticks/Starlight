@@ -22,4 +22,4 @@ print(" Connected!")
 
 while True:
     data = sock.recv(32)
-    print(data.decode("ascii"), end='', flush="True")
+    print(data.decode("utf-8"), end='', flush="True")

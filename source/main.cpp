@@ -3,7 +3,7 @@
 
 #include "il2cpp-appdata.h"
 
-#include <hyperbeam/core.h> // Includes hb::RegisterStore, the new and delete operators and more
+#include <hyperbeam/core.h> // Includes the new and delete operators and more
 
 // Note that there's only a header file for logging.
 // Using a seperate translation unit messes things up and leads to crashes for some reason.
@@ -53,17 +53,11 @@ static struct GlobalState {
     CustomOrganization* organizations;
 } state;
 
-void hookGameDataConstructor(GameData* thisPtr) {
+void hookGroundManagerOnEnable(GroundManager* thisPtr) {
     // Called early during game initialization. Use this hook for custom initialization logic.
 
     // Restore the instruction that was replaced
     __asm("MOV X19, X0");
-
-    // hb::RegisterStore automatically saves registers that must be preserved and restores them in the
-    // destructor when the struct goes out of scope (at the end of the function). This pattern makes
-    // writing safe hooks easier, but note that this is much slower than manually restoring the registers, 
-    // so don't use hb::RegisterStore in hot loops.
-    hb::RegisterStore registerStore;
 
     // Initialize the TCP log server (connect with "python scripts/logClient.py [Switch IP]")
     LOG_INIT();
@@ -95,27 +89,35 @@ void hookGameDataConstructor(GameData* thisPtr) {
         LOG("Failed to read starters.bin!");
     }
 
-    if (!hb::fs::unmountRomFs()) {
-        LOG("Failed to unmount RomFS!");
-    }
-
     LOG("Starter list: ");
     for (int i = 0; i < RTDX_STARTER_COUNT; i++) {
         LOGF("%d, ", rtdx_starters[i].pokemonId);
     }
     LOG("\n");
+
+    auto npcDatabase = thisPtr->groundTonwNpcDatabase_; // sic
+
+    // GroundTownNpcDatabase is a Unity ScriptableObject, so we can simply overwrite its data from a JSON file
+    auto json = hb::fs::readEntireFile("hyperbeam_romfs:/Data/StreamingAssets/custom_data/town_npc_database.json");
+    if (json) {
+        auto jsonString = hb::createCSharpString(json);
+        JsonUtility_FromJsonOverwrite(jsonString, (Object*) npcDatabase, JsonUtility_FromJsonOverwrite__MethodInfo);
+        delete json;
+
+        LOG("Loaded the town NPC database.\n");
+    } else {
+        LOG("Failed to read town_npc_database.json!\n");
+    }
+
+    // Restore the old value of X0
+    __asm ("MOV X0, %[value]" : [value] "=r" (thisPtr));
 }
 
 void customPegasusActDatabaseStaticConstructor() {
-    // Read actor database from a file
-    if (!hb::fs::mountRomFs()) {
-        LOG("Failed to mount RomFS!");
-        return;
-    }
-
     uint32_t actorCount = 0;
     CustomActorData* actors;
 
+    // Read actor database from a file
     char* actorDatabaseFile = hb::fs::readEntireFile("hyperbeam_romfs:/Data/StreamingAssets/custom_data/actor_database.bin");
     if (actorDatabaseFile) {
         hb::memcpy(&actorCount, actorDatabaseFile, sizeof(uint32_t));
@@ -127,10 +129,6 @@ void customPegasusActDatabaseStaticConstructor() {
     } else {
         LOG("Failed to read actor_database.bin!");
         return;
-    }
-
-    if (!hb::fs::unmountRomFs()) {
-        LOG("Failed to unmount RomFS!");
     }
 
     // IL2CPP lazily initializes method metadata, so the methods that need to be accessed here are not loaded yet.
@@ -224,8 +222,6 @@ void customClearFixedPartyOrganization(Organization* thisPtr, bool resetFreeMemb
 
 void hookDungeonLoopMoveNext(DungeonParameter* dungeonParameter) {
     // The DungeonParameter pointer is passed as an argument since it's stored in X0 at this point
-    // This is always called since the check for Gengar is disabled in the patch.
-    // No need to use hb::RegisterStore here because we're replacing another method call.
 
     // Shared method; see comment on list constructor above
     auto organizationInstance = (Organization*) Singleton_1_NativeMessageWindowCtrl__get_Instance((MethodInfo*) Singleton_1_Organization__get_Instance__MethodInfo);
@@ -242,6 +238,9 @@ void hookDungeonLoopMoveNext(DungeonParameter* dungeonParameter) {
     }
 
     LOGF("Added guest Pokémon for organization type %d.\n", organizationType);
+
+    // Restore the old value of X0
+    __asm ("MOV X0, %[value]" : [value] "=r" (dungeonParameter));
 }
 
 int main(int argc, char** argv) {
