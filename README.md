@@ -10,7 +10,7 @@ Examples for manipulating party members are included, see `source/main.cpp` and 
 ## Building
 - Make sure that the `DEVKITPRO` environment variable is set to the path where devkitPro is installed.
 - Run `make`.
-- Copy the built `Starlight102.nso` to `/atmosphere/contents/01003D200BAA2000/exefs/subsdk1`
+- Copy the built `hyperbeam102.nso` to `/atmosphere/contents/01003D200BAA2000/exefs/subsdk1`
 - Copy `starlight_patch_102/3AB632DEE82D59448599B2291F30994A.ips` to `/atmosphere/exefs_patches/starlight_patch_102/3AB632DEE82D59448599B2291F30994A.ips`
 (if you're using Yuzu, copy the .ips to the `exefs` directory inside your mod directory, see their [game modding guide](https://yuzu-emu.org/help/feature/game-modding/)).
 
