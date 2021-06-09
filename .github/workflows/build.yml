@@ -3,24 +3,15 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: devkitpro/devkita64:latest
+    container: techticks/pmd-switch-slim:latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Install dependencies
-        shell: bash
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y python3-pip
-          pip3 install keystone-engine
 
       - name: Build
         shell: bash
         run: |
           make
-        env:
-          DEVKITPRO: "/opt/devkitpro"
 
       - name: Prepare artifacts
         shell: bash
