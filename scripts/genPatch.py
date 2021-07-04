@@ -16,7 +16,7 @@ PATCH_CONFIG_DIR = os.path.join(PATCH_DIR, "configs")
 PATCH_NSO_MAP_DIR = os.path.join(PATCH_DIR, "maps")
 PATCH_CONFIG_EXTENSION = ".config"
 
-IPS_OUT_DIR_NAME = "starlight_patch_{}"
+IPS_OUT_DIR_NAME = "hyperbeam_patch_{}"
 IPS_FORMAT = ".ips"
 IPS_HEADER_MAGIC = bytes("IPS32", 'ASCII')
 IPS_EOF_MAGIC = bytes("EEOF", 'ASCII')

@@ -24,4 +24,4 @@ jobs:
           name: build
           path: |
             subsdk1
-            starlight_patch_102/*
+            hyperbeam_patch_102/*

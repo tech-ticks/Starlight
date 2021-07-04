@@ -20,5 +20,5 @@ debug/
 release/
 lib/
 linkerscripts/symstemp.ld
-starlight_patch*/
+hyperbeam_patch*/
 scripts/.idea/*
