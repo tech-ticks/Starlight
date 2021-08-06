@@ -12,6 +12,10 @@ hyperbeam:
 	$(MAKE) all -f nso.mk S2VER=$(S2VER) S2VERSTR=$(S2VERSTR)
 	$(MAKE) hyperbeam_patch_$(S2VER)/*.ips
 
+hyperbeam_release:
+	$(MAKE) all -f nso.mk S2VER=$(S2VER) S2VERSTR=$(S2VERSTR) RELEASE=1
+	$(MAKE) hyperbeam_patch_$(S2VER)/*.ips
+
 hyperbeam_patch_$(S2VER)/*.ips: patches/*.slpatch patches/configs/$(S2VER).config patches/maps/$(S2VER)/*.map \
 								build$(S2VER)/$(shell basename $(CURDIR))$(S2VER).map scripts/genPatch.py
 	@rm -f hyperbeam_patch_$(S2VER)/*.ips

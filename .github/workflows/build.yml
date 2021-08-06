@@ -8,20 +8,39 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Build
+      - name: Build (Debug)
         shell: bash
         run: |
-          make
+          make hyperbeam
 
-      - name: Prepare artifacts
+      - name: Prepare artifacts (Debug)
         shell: bash
         run: |
           mv *.nso subsdk1
           
-      - name: Upload artifacts
+      - name: Upload artifacts (Debug)
         uses: actions/upload-artifact@v2
         with:
           name: build
+          path: |
+            subsdk1
+            hyperbeam_patch_102/*
+
+      - name: Build (Release)
+        shell: bash
+        run: |
+          make clean
+          make hyperbeam_release
+
+      - name: Prepare artifacts (Release)
+        shell: bash
+        run: |
+          mv *.nso subsdk1
+          
+      - name: Upload artifacts (Release)
+        uses: actions/upload-artifact@v2
+        with:
+          name: build_release
           path: |
             subsdk1
             hyperbeam_patch_102/*

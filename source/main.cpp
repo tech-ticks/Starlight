@@ -5,10 +5,13 @@
 
 #include <hyperbeam/core.h> // Includes the new and delete operators and more
 
+#if !defined(NDEBUG)
+    #define ENABLE_LOGGING
+#endif
+
 // Note that there's only a header file for logging.
 // Using a seperate translation unit messes things up and leads to crashes for some reason.
 // TODO: investigate why this is happening
-#define ENABLE_LOGGING
 #include <hyperbeam/logging.h>
 #include <hyperbeam/fs.h>
 #include <rtdx/starters.h>
