@@ -22,7 +22,9 @@
 #define ORGANIZATION_GUEST_NUM 8
 #define ORGANIZATION_NAME_LENGTH 32
 
-char reserve_[0x100000]; // The game crashes without a zero memory area at the start of the executable. Not sure why, maybe the stack isn't set up?
+// The game crashes without a zero memory area at the start of the executable. Not sure why, maybe the stack isn't set up?
+// TODO: Related to this? https://github.com/switchbrew/libnx/blob/master/nx/source/runtime/init.c#L38
+char reserve_[0x100000];
 
 struct CustomActorData {
     char16_t symbolName[32];
@@ -67,7 +69,7 @@ void hookGroundManagerOnEnable(GroundManager* thisPtr) {
     LOG("Logger initialized.\n");
 
     if (!hb::fs::mountRomFs()) {
-        LOG("Failed to mount RomFS!");
+        LOG("Failed to mount RomFS!\n");
         return;
     }
 
@@ -81,7 +83,7 @@ void hookGroundManagerOnEnable(GroundManager* thisPtr) {
 
         delete organizationsFile;
     } else {
-        LOG("Failed to read fixed_organization.bin!");
+        LOG("Failed to read fixed_organization.bin!\n");
     }
 
     char* startersFile = hb::fs::readEntireFile("hyperbeam_romfs:/Data/StreamingAssets/custom_data/starters.bin");
@@ -89,7 +91,7 @@ void hookGroundManagerOnEnable(GroundManager* thisPtr) {
         hb::memcpy(rtdx_starters, startersFile, sizeof(Starter) * RTDX_STARTER_COUNT);
         delete startersFile;
     } else {
-        LOG("Failed to read starters.bin!");
+        LOG("Failed to read starters.bin!\n");
     }
 
     LOG("Starter list: ");
@@ -125,8 +127,7 @@ void customPegasusActDatabaseStaticConstructor() {
     if (actorDatabaseFile) {
         hb::memcpy(&actorCount, actorDatabaseFile, sizeof(uint32_t));
         actors = new CustomActorData[actorCount];
-        hb::memcpy(actors, actorDatabaseFile + sizeof(uint32_t),
-            sizeof(CustomActorData) * actorCount);
+        hb::memcpy(actors, actorDatabaseFile + sizeof(uint32_t), sizeof(CustomActorData) * actorCount);
 
         delete actorDatabaseFile;
     } else {
@@ -184,8 +185,10 @@ void customPegasusActDatabaseStaticConstructor() {
 }
 
 Organization_OrganizationType__Enum customGetOrganizationType(String* organizationSymbol) {
-    // The return value affects the result of Organization_GetOrganizationType
-    // since this function is branched into with "B" instead of "BL".
+    if (state.organizations == nullptr || state.organizationCount <= 0) {
+        LOGF("No custom organization types present, falling back to native hardcoded values.\n");
+        return Organization_GetOrganizationType(organizationSymbol, nullptr);
+    }
 
     // Find the organization that matches the symbol string
     uint32_t index;
@@ -208,6 +211,12 @@ Organization_OrganizationType__Enum customGetOrganizationType(String* organizati
 }
 
 void customClearFixedPartyOrganization(Organization* thisPtr, bool resetFreeMember) {
+     if (state.organizations == nullptr || state.organizationCount <= 0) {
+        LOGF("No custom organizations present, falling back to native hardcoded values.\n");
+        Organization_ClearFixedPartyOrganization(thisPtr, resetFreeMember, nullptr);
+        return;
+    }
+
     // Apply the organization members that were loaded from the file
     size_t organizationType = (size_t) thisPtr->type_;
     for (uint32_t i = 0; i < ORGANIZATION_MEMBER_NUM; i++) {
@@ -226,21 +235,23 @@ void customClearFixedPartyOrganization(Organization* thisPtr, bool resetFreeMemb
 void hookDungeonLoopMoveNext(DungeonParameter* dungeonParameter) {
     // The DungeonParameter pointer is passed as an argument since it's stored in X0 at this point
 
-    // Shared method; see comment on list constructor above
-    auto organizationInstance = (Organization*) Singleton_1_NativeMessageWindowCtrl__get_Instance((MethodInfo*) Singleton_1_Organization__get_Instance__MethodInfo);
-    // Get the current organization index
-    size_t organizationType = (size_t) organizationInstance->type_;
-    
-    // Add all guests that were previously read from the file
-    for (uint32_t i = 0; i < ORGANIZATION_GUEST_NUM; i++) {
-        auto guest = state.organizations[organizationType].guests[i];
-        if (guest.index != (uint16_t) FixedWarehouseId__Enum::NULL_1) {
-            DungeonParameter_AddExtraFixedPokemon(dungeonParameter, (FixedWarehouseId__Enum) guest.index,
-                (ExtraPokemonType__Enum) guest.type, nullptr);
+    if (state.organizations != nullptr && state.organizationCount > 0) {
+        // Shared method; see comment on list constructor above
+        auto organizationInstance = (Organization*) Singleton_1_NativeMessageWindowCtrl__get_Instance((MethodInfo*) Singleton_1_Organization__get_Instance__MethodInfo);
+        // Get the current organization index
+        size_t organizationType = (size_t) organizationInstance->type_;
+        
+        // Add all guests that were previously read from the file
+        for (uint32_t i = 0; i < ORGANIZATION_GUEST_NUM; i++) {
+            auto guest = state.organizations[organizationType].guests[i];
+            if (guest.index != (uint16_t) FixedWarehouseId__Enum::NULL_1) {
+                DungeonParameter_AddExtraFixedPokemon(dungeonParameter, (FixedWarehouseId__Enum) guest.index,
+                    (ExtraPokemonType__Enum) guest.type, nullptr);
+            }
         }
-    }
 
-    LOGF("Added guest Pokémon for organization type %d.\n", organizationType);
+        LOGF("Added guest Pokémon for organization type %d.\n", organizationType);
+    }
 
     // Restore the old value of X0
     __asm ("MOV X0, %[value]" : [value] "=r" (dungeonParameter));

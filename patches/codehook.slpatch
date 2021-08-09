@@ -5,11 +5,14 @@ GroundManager_OnEnable+18:
 PegasusActDatabase__cctor+0:
    B customPegasusActDatabaseStaticConstructor
 
-Organization_GetOrganizationType+0:
-   B customGetOrganizationType
+Organization_InitPartyOrganization+44:
+   BL customGetOrganizationType
 
-Organization_ClearFixedPartyOrganization+0:
-   B customClearFixedPartyOrganization
+Organization_InitPartyOrganization+A4:
+   BL customClearFixedPartyOrganization
+
+DungeonEnterMenu_MainFlow_d_8_MoveNext+1B6C:
+   BL customClearFixedPartyOrganization
 
 Organization_IsEventGENGAA+8:
    MOV W0, #1

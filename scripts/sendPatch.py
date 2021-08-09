@@ -51,7 +51,7 @@ patchDirectories = []
 
 root, dirs, _ = next(os.walk(curDir))
 for dir in dirs:
-    if dir.startswith("starlight_patch_"):
+    if dir.startswith("hyperbeam_patch_"):
         patchDirectories.append((os.path.join(root, dir), dir))
 
 ensuredirectory(ftp, '', 'atmosphere')
