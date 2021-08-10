@@ -14,6 +14,7 @@
 // TODO: investigate why this is happening
 #include <hyperbeam/logging.h>
 #include <hyperbeam/fs.h>
+#include <hyperbeam/message.h>
 #include <rtdx/starters.h>
 
 #define PRESET_INDEX_FIXED 10
@@ -25,6 +26,13 @@
 // The game crashes without a zero memory area at the start of the executable. Not sure why, maybe the stack isn't set up?
 // TODO: Related to this? https://github.com/switchbrew/libnx/blob/master/nx/source/runtime/init.c#L38
 char reserve_[0x100000];
+
+struct DefaultStarters {
+    uint16_t playerIndex;
+    int16_t playerGender;
+    uint16_t partnerIndex;
+    int16_t partnerGender;
+};
 
 struct CustomActorData {
     char16_t symbolName[32];
@@ -56,6 +64,8 @@ struct CustomOrganization {
 static struct GlobalState {
     uint32_t organizationCount = 0;
     CustomOrganization* organizations;
+    bool overrideDefaultStarters = false;
+    DefaultStarters defaultStarters;
 } state;
 
 void hookGroundManagerOnEnable(GroundManager* thisPtr) {
@@ -100,6 +110,17 @@ void hookGroundManagerOnEnable(GroundManager* thisPtr) {
     }
     LOG("\n");
 
+    char* defaultStartersFile = hb::fs::readEntireFile("hyperbeam_romfs:/Data/StreamingAssets/custom_data/default_starters.bin");
+    if (startersFile) {
+        hb::memcpy(&state.defaultStarters, defaultStartersFile, sizeof(DefaultStarters));
+        state.overrideDefaultStarters = true;
+        delete defaultStartersFile;
+    } else {
+        LOG("Failed to read default_starters.bin, will fall back to hardcoded default starters.\n");
+        state.defaultStarters.playerIndex = (uint16_t) Index__Enum::PIKACHUU; // Pikachu
+        state.defaultStarters.partnerIndex = (uint16_t) Index__Enum::FUSHIGIDANE; // Bulbasaur
+    }
+
     auto npcDatabase = thisPtr->groundTonwNpcDatabase_; // sic
 
     // GroundTownNpcDatabase is a Unity ScriptableObject, so we can simply overwrite its data from a JSON file
@@ -131,7 +152,7 @@ void customPegasusActDatabaseStaticConstructor() {
 
         delete actorDatabaseFile;
     } else {
-        LOG("Failed to read actor_database.bin!");
+        LOG("Failed to read actor_database.bin!\n");
         return;
     }
 
@@ -255,6 +276,40 @@ void hookDungeonLoopMoveNext(DungeonParameter* dungeonParameter) {
 
     // Restore the old value of X0
     __asm ("MOV X0, %[value]" : [value] "=r" (dungeonParameter));
+}
+
+extern "C" void nativeInitializeWithChangeLanguage();
+
+void hookInitializeWithChangeLanguage() {
+    // Original call
+    nativeInitializeWithChangeLanguage();
+
+    Bind_PokemonWarehouse_InitializeHero((int) state.defaultStarters.playerIndex,
+        (int) state.defaultStarters.playerGender, nullptr);
+    Bind_PokemonWarehouse_InitializePartner((int) state.defaultStarters.partnerIndex,
+        (int) state.defaultStarters.partnerGender, nullptr);
+
+    LOGF("Initialized save game with default starters.\n");
+
+    il2cpp_initialize_method_metadata(0x30DDu);
+    il2cpp_initialize_method_metadata(0x378u);
+
+    auto warehouse = (PokemonWarehouse*) Singleton_1_NativeMessageWindowCtrl__get_Instance(
+        (MethodInfo*) Singleton_1_PokemonWarehouse__get_Instance__MethodInfo);
+    
+    auto heroWarehouseStatus = (PokemonWarehouseStatus*) PokemonWarehouse_GetHeroStatus(warehouse, nullptr);
+    auto partnerWarehouseStatus = (PokemonWarehouseStatus*) PokemonWarehouse_GetPartnerStatus(warehouse, nullptr);
+
+    auto heroStatus = (PokemonStatus*) PokemonWarehouseStatus_GetStatus(heroWarehouseStatus, nullptr);
+    auto partnerStatus = (PokemonStatus*) PokemonWarehouseStatus_GetStatus(partnerWarehouseStatus, nullptr);
+
+    PokemonStatus_SetName(heroStatus, hb::message::getCommonString(
+        (int) TextIDHash__Enum::DEBUG_MENU__DEBUG_HERO_NAME), nullptr);
+    PokemonStatus_SetName(partnerStatus, hb::message::getCommonString(
+        (int) TextIDHash__Enum::DEBUG_MENU__DEBUG_PARTNER_NAME), nullptr);
+
+    Bind_AdventureLog_SetMetPokemon(state.defaultStarters.playerIndex, nullptr);
+    Bind_AdventureLog_SetMetPokemon(state.defaultStarters.partnerIndex, nullptr);
 }
 
 int main(int argc, char** argv) {

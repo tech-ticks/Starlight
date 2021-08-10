@@ -45,6 +45,7 @@
 
 extern "C" void* il2cpp_object_new(void* typeInfo);
 extern "C" int il2cpp_initialize_method_metadata(uint32_t unk);
+extern "C" int il2cpp_initialize_typeinfo(void* typeinfo);
 
 // monitor
 

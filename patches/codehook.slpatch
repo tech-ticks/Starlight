@@ -22,3 +22,6 @@ GameFlowBlob_Dungeon_DungeonLoop_d_26_MoveNext+D10:
 
 TextID_editorTextModify_+2EC:
    NOP
+
+Bind_InitializeWithChangeLanguage+0:
+   B hookInitializeWithChangeLanguage
