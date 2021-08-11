@@ -166,11 +166,7 @@ void customPegasusActDatabaseStaticConstructor() {
 
     // Create a new System.Collections.Generic.List<PegasusActDatabase.ActorData>
     auto actorDataList = (List_1_PegasusActDatabase_ActorData_ *) il2cpp_object_new(List_1_PegasusActDatabase_ActorData___TypeInfo);
-    // The constructor is called List_1_System_IO_Directory_SearchData___ctor because it's shared between
-    // multiple classes. The MethodInfo must be passed to shared functions.
-    // (see https://katyscode.wordpress.com/2021/01/14/il2cppinspector-tutorial-working-with-code-in-il2cpp-dll-injection-projects/)
-    List_1_System_IO_Directory_SearchData___ctor((List_1_System_IO_Directory_SearchData_ *) actorDataList, 
-        List_1_PegasusActDatabase_ActorData___ctor__MethodInfo);
+    List_1_PegasusActDatabase_ActorData___ctor(actorDataList, List_1_PegasusActDatabase_ActorData___ctor__MethodInfo);
     
     for (uint32_t i = 0; i < actorCount; i++) {
         auto& actorData = actors[i];
@@ -257,8 +253,7 @@ void hookDungeonLoopMoveNext(DungeonParameter* dungeonParameter) {
     // The DungeonParameter pointer is passed as an argument since it's stored in X0 at this point
 
     if (state.organizations != nullptr && state.organizationCount > 0) {
-        // Shared method; see comment on list constructor above
-        auto organizationInstance = (Organization*) Singleton_1_NativeMessageWindowCtrl__get_Instance((MethodInfo*) Singleton_1_Organization__get_Instance__MethodInfo);
+        auto organizationInstance = Singleton_1_Organization__get_Instance((MethodInfo*) Singleton_1_Organization__get_Instance__MethodInfo);
         // Get the current organization index
         size_t organizationType = (size_t) organizationInstance->type_;
         
@@ -294,7 +289,7 @@ void hookInitializeWithChangeLanguage() {
     il2cpp_initialize_method_metadata(0x30DDu);
     il2cpp_initialize_method_metadata(0x378u);
 
-    auto warehouse = (PokemonWarehouse*) Singleton_1_NativeMessageWindowCtrl__get_Instance(
+    auto warehouse = Singleton_1_PokemonWarehouse__get_Instance(
         (MethodInfo*) Singleton_1_PokemonWarehouse__get_Instance__MethodInfo);
     
     auto heroWarehouseStatus = (PokemonWarehouseStatus*) PokemonWarehouse_GetHeroStatus(warehouse, nullptr);
