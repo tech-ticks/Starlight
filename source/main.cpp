@@ -249,6 +249,8 @@ void customClearFixedPartyOrganization(Organization* thisPtr, bool resetFreeMemb
     LOGF("Applied member Pokémon to organization type %d.\n", organizationType);
 }
 
+static bool firstTimeDungeonEntered = false;
+
 void hookDungeonLoopMoveNext(DungeonParameter* dungeonParameter) {
     // The DungeonParameter pointer is passed as an argument since it's stored in X0 at this point
 
@@ -268,6 +270,8 @@ void hookDungeonLoopMoveNext(DungeonParameter* dungeonParameter) {
 
         LOGF("Added guest Pokémon for organization type %d.\n", organizationType);
     }
+
+    firstTimeDungeonEntered = true;
 
     // Restore the old value of X0
     __asm ("MOV X0, %[value]" : [value] "=r" (dungeonParameter));
@@ -305,6 +309,181 @@ void hookInitializeWithChangeLanguage() {
 
     Bind_AdventureLog_SetMetPokemon(state.defaultStarters.playerIndex, nullptr);
     Bind_AdventureLog_SetMetPokemon(state.defaultStarters.partnerIndex, nullptr);
+}
+
+typedef void (*setBelly_t) (uint64_t* nativeStatusThisPtr, int belly);
+
+void setBelly(PokemonStatus* status, int newBelly) {
+    uint64_t nativePointer = StatusBase_get_NativePoineterId((StatusBase*) status, nullptr);
+
+    // Based on decompilation of a similar function call, which is why it looks so ugly
+    // I think this is calling into the vtable (?)
+    auto nativeSetBelly = (setBelly_t) (*(uint64_t*)(*(uint64_t*)nativePointer + 128LL));
+    nativeSetBelly((uint64_t*) nativePointer, newBelly);
+}
+
+void forceUpdateBellyInUI(PokemonStatus* status) {
+    uint32_t nativeUniqueId = StatusBase_get_UniqueId((StatusBase*) status, nullptr);
+    auto belly = PokemonStatus_GetBelly(status, nullptr);
+
+    auto dungeonEngine = DungeonEngine__TypeInfo->static_fields->s_insntance;
+    auto topScreen = dungeonEngine->m_dungeonTopScreen;
+    auto displayStatusArray = topScreen->m_aDisplayStatus;
+
+    auto dirtyFlagArray = topScreen->m_dirtyFlag->aStatus;
+    for (int i = 0; i < (int) displayStatusArray->max_length; i++) {
+        if (displayStatusArray->vector[i]->nativeUniqueId == nativeUniqueId) {
+            displayStatusArray->vector[i]->belly = belly;
+            dirtyFlagArray->vector[i]->bBelly = true;
+        }
+    }
+}
+
+void recolorBellyGauge() {
+    auto dungeonEngine = DungeonEngine__TypeInfo->static_fields->s_insntance;
+    auto topScreen = dungeonEngine->m_dungeonTopScreen;
+
+    auto mainTransform = GameObject_get_transform(topScreen->m_obj, nullptr);
+    for (size_t i = 0; i <  topScreen->DisplayStatusToken->max_length; i++) {
+        auto token = topScreen->DisplayStatusToken->vector[i];
+        auto displayObj = UIToken_FindHierarchyToken(mainTransform, token, false, nullptr);
+        auto displayTransform = GameObject_get_transform(displayObj, nullptr);
+        auto onakaSetObj = UIToken_FindHierarchyToken(displayTransform, hb::createCSharpString("OnakaSet"), false, nullptr);
+        auto onakaSet = GameObject_get_transform(onakaSetObj, nullptr);
+        auto gaugeObj = UIToken_FindHierarchyToken(onakaSet, hb::createCSharpString("Gauge"), false, nullptr);
+        auto gaugeImage = (Image *) GameObject_GetComponent_148(gaugeObj, GameObject_GetComponent_20__MethodInfo);
+
+        Color color;
+        color.r = 211.f/255.f;
+        color.g = 0.f;
+        color.b = 1.f;
+        color.a = 1.f;
+        Graphic_set_color((Graphic*) gaugeImage, color, nullptr);
+        
+        auto borderTransform = Transform_Find(onakaSet, hb::createCSharpString("Img_Waku"), Transform_Find__MethodInfo);
+        auto borderObj = Component_1_get_gameObject((Component_1*) borderTransform, nullptr);
+        auto borderImage = (Image *) GameObject_GetComponent_148(borderObj, GameObject_GetComponent_20__MethodInfo);
+        color.r = 183.f/255.f;
+        color.g = 155.f/255.f;
+        Graphic_set_color((Graphic*) borderImage, color, nullptr);
+    }
+}
+
+const int BELLY_GAIN_PER_ENEMY = 600;
+const int EXTRA_BELLY_DECREASE_PER_TURN = 50;
+int lastPartyExperience[3] = { 0, 0, 0 };
+bool partyExperienceInitialized = false;
+
+typedef Index__Enum_5 WazaIndex;
+
+void hookDungeonEngineUpdate(GameSystem* thisPtr) {
+    // Called on every frame in a dungeon
+
+    recolorBellyGauge(); // TODO: no reason to do this in every frame
+
+    auto gameData = Singleton_1_GameData__get_Instance((MethodInfo*) Singleton_1_GameData__get_Instance__MethodInfo);
+    auto partyList = GameData_GetPartyList(gameData, nullptr);
+
+    for (int i = 0; i < partyList->_size && i < 3; i++) {
+        auto partyStatus = (PartyStatus*) partyList->_items->vector[i];
+        auto status = (PokemonStatus*) PartyStatus_GetStatus(partyStatus, nullptr);
+        int experience = PokemonStatus_GetExperience(status, nullptr);        
+
+        if (experience != lastPartyExperience[i]) {
+            if (partyExperienceInitialized && lastPartyExperience[i] != 0 && PartyStatus_IsPlayer(partyStatus, nullptr)) {
+                int experienceDiff = experience - lastPartyExperience[i];
+
+                auto currentBelly = PokemonStatus_GetBelly(status, nullptr);
+                auto maxBelly = PokemonStatus_GetMaxBelly(status, nullptr);
+                auto newBelly = currentBelly + BELLY_GAIN_PER_ENEMY;
+                if (newBelly > maxBelly) {
+                    newBelly = maxBelly;
+                }
+
+                setBelly(status, newBelly);
+                LOGF("Gained %d belly, experience diff: %d\n", BELLY_GAIN_PER_ENEMY, experienceDiff);
+            }
+
+            lastPartyExperience[i] = experience;
+            partyExperienceInitialized = true;
+        }
+    }
+
+    // auto input = (InputSystem*) Singleton_1_NativeMessageWindowCtrl__get_Instance(
+    //             Singleton_1_InputSystem__get_Instance__MethodInfo);
+    // if (InputSystem_IsPad_MenuGeneralYButton(input, nullptr)) {
+    //     DungeonPlayerCommand_UseWaza(WazaIndex::TELEPORT, nullptr, nullptr);
+    // }
+}
+
+IEnumerator* hookOnPlayerTurnInput(IEnumerator* returnVal) {
+    /*auto player = (Creature*) Creature_GetPlayer(nullptr);
+    auto playerStatus = (PokemonStatus*) Creature_GetStatus(player, nullptr);
+    auto belly = PokemonStatus_GetBelly(playerStatus, nullptr);
+    belly -= EXTRA_BELLY_DECREASE_PER_TURN;
+    if (belly < 1) {
+        belly = 1;
+    }
+    setBelly(playerStatus, belly);*/
+
+    auto gameData = Singleton_1_GameData__get_Instance((MethodInfo*) Singleton_1_GameData__get_Instance__MethodInfo);
+    auto partyList = GameData_GetPartyList(gameData, nullptr);
+
+    for (int i = 0; i < partyList->_size && i < 3; i++) {
+        auto partyStatus = (PartyStatus*) partyList->_items->vector[i];
+        auto status = (PokemonStatus*) PartyStatus_GetStatus(partyStatus, nullptr);
+        
+        forceUpdateBellyInUI(status);
+    }
+
+    return returnVal;
+}
+
+bool customCustomShortcutCheckValidCommand(CustomShortcut* thisPtr, OptionManager_Shortcut__Enum shortcut, MethodInfo *method) {
+    if ((int) shortcut == 12) { // Top button (Sneak Attack)
+        auto playerCreature = (Creature*) Creature_GetPlayer(nullptr);
+        if (playerCreature == nullptr) {
+            return false;
+        }
+        auto playerCoord = Creature_GetCoord(playerCreature, nullptr);
+        auto playerDir = Creature_GetDirection(playerCreature, nullptr);
+
+        auto enemies = Creature_FindEnemies(playerCreature, 1, true, false, playerCoord, playerDir, nullptr);
+        if (enemies == nullptr || enemies->_size < 1) {
+            return false;
+        }
+        
+        // The list should always contain either zero or one item
+        auto enemy = (Creature*) enemies->_items->vector[0];
+        auto enemyDir = Creature_GetDirection(enemy, nullptr);
+
+        // Sneak Attack can only be performed if the player attacks from behind, so the player direction
+        // must be the same as the enemy direction
+        return playerDir->dir_ == enemyDir->dir_;
+    }
+    return false;
+}
+
+IEnumerator* hookOnPlayerTurnInputShortcutMoveNext(
+    DungeonEngine_OnPlayerTurnInput_Shortcut_d_64* thisPtr, MethodInfo* method
+) {
+    int shortcut = thisPtr->shortcut_no;
+    LOGF("input shortcut movenext %d\n", shortcut);
+    if (shortcut == 12) { // Top button
+        DungeonPlayerCommand_UseWaza(WazaIndex::HASAMIGUILLOTINE, nullptr, nullptr); // Use Guillotine
+    }
+    return nullptr;
+}
+
+void hookMessageLogManagerAdd2(MessageLogManager* thisPtr, String* str) {
+    // Restore the instruction that was replaced
+    __asm("MOV X20, X1");
+
+    auto cStr = hb::cSharpStringToTempCharPtr(str);
+    LOGF("From log: %s\n", cStr);
+
+    // Restore the old value of X1
+    __asm("MOV X1, %[value]" : [value] "=r" (str));
 }
 
 int main(int argc, char** argv) {

@@ -1,27 +1,42 @@
 [version=102, target=main]
 GroundManager_OnEnable+18:
-   BL hookGroundManagerOnEnable
+  BL hookGroundManagerOnEnable
 
 PegasusActDatabase__cctor+0:
-   B customPegasusActDatabaseStaticConstructor
+  B customPegasusActDatabaseStaticConstructor
 
 Organization_InitPartyOrganization+44:
-   BL customGetOrganizationType
+  BL customGetOrganizationType
 
 Organization_InitPartyOrganization+A4:
-   BL customClearFixedPartyOrganization
+  BL customClearFixedPartyOrganization
 
 DungeonEnterMenu_MainFlow_d_8_MoveNext+1B6C:
-   BL customClearFixedPartyOrganization
+  BL customClearFixedPartyOrganization
 
 Organization_IsEventGENGAA+8:
-   MOV W0, #1
+  MOV W0, #1
 
 GameFlowBlob_Dungeon_DungeonLoop_d_26_MoveNext+D10:
-   BL hookDungeonLoopMoveNext
+  BL hookDungeonLoopMoveNext
 
 TextID_editorTextModify_+2EC:
-   NOP
+  NOP
 
 Bind_InitializeWithChangeLanguage+0:
-   B hookInitializeWithChangeLanguage
+  B hookInitializeWithChangeLanguage
+
+DungeonEngine_Update+44:
+  B hookDungeonEngineUpdate
+
+MessageLogManager_Add2+24:
+  BL hookMessageLogManagerAdd2
+  
+DungeonEngine_OnPlayerTurnInput+70:
+  B hookOnPlayerTurnInput
+
+DungeonEngine_OnPlayerTurnInput_Shortcut_d_64_MoveNext+0:
+  B hookOnPlayerTurnInputShortcutMoveNext
+
+CustomShortcut_CheckValidCommand+0:
+  B customCustomShortcutCheckValidCommand
